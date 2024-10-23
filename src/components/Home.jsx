@@ -8,6 +8,7 @@ import sampleRecords from "./sample_records";
 import { BiSolidError } from "react-icons/bi";
 import DialogBox from "./Dialog"; // Import the DialogBox component
 import { IoMdInformationCircleOutline } from "react-icons/io";
+import axios from "axios";
 
 function Home() {
   const fileInput = useRef(null);
@@ -21,8 +22,8 @@ function Home() {
   const [dialogContent, setDialogContent] = useState({
     icon: null,
     title: "",
-    message: ""
-  })
+    message: "",
+  });
 
   // Handler for input change
   const handleInputChange = (e) => {
@@ -31,27 +32,43 @@ function Home() {
 
   // Handler for adding the security
   const handleAddClick = () => {
-    const security = sampleRecords.find((record) => record.id === inputValue);
-    if (security) {
-      setRows([...rows, security]);
-    } else {
-        setDialogContent({
+    axios
+      .get("http://localhost:8080/api/securities/" + inputValue)
+      .then((response) => {
+        console.log(response);
+        const security = response.data;
+        if (security) {
+          setRows([...rows, security]);
+        } else {
+          setDialogContent({
             icon: <BiSolidError className="w-10 h-10 text-red-500" />,
             title: "Error",
-            message: "No record found with this ID."
-        })
+            message: "No record found with this ID.",
+          });
+          setShowDialog(true);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        setDialogContent({
+          icon: <BiSolidError className="w-10 h-10 text-red-500" />,
+          title: "Error",
+          message: "No record found with this ID.",
+        });
         setShowDialog(true);
-    }
+      });
   };
 
   const handleSend = (event) => {
     setDialogContent({
-        icon: <IoMdInformationCircleOutline className="w-10 h-10 text-green-500" />,
-        title: "ISM Message sent!",
-        message: "ISM Message with selected securities successfully sent!"
-      })
-      setShowDialog(true);
-  }
+      icon: (
+        <IoMdInformationCircleOutline className="w-10 h-10 text-green-500" />
+      ),
+      title: "ISM Message sent!",
+      message: "ISM Message with selected securities successfully sent!",
+    });
+    setShowDialog(true);
+  };
 
   // Handler for file upload and parsing
   const handleFileUpload = (event) => {
@@ -90,7 +107,11 @@ function Home() {
       }
     };
 
-    if (file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || file.type === "application/vnd.ms-excel") {
+    if (
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.type === "application/vnd.ms-excel"
+    ) {
       reader.readAsBinaryString(file);
     } else {
       reader.readAsText(file);
@@ -255,7 +276,10 @@ function Home() {
         <div className="border border-x"></div>
 
         <div className="flex gap-x-4 justify-end w-auto items-center">
-          <button onClick={handleDownloadCSV} className="text-xs bg-[#14697e] p-2 text-white flex gap-x-2 items-center">
+          <button
+            onClick={handleDownloadCSV}
+            className="text-xs bg-[#14697e] p-2 text-white flex gap-x-2 items-center"
+          >
             <IoMdDownload /> CSV
           </button>
           <button
@@ -265,7 +289,12 @@ function Home() {
           >
             REMOVE
           </button>
-          <button onClick={handleSend} className="text-xs bg-[#14697e] p-2 text-white">SEND</button>
+          <button
+            onClick={handleSend}
+            className="text-xs bg-[#14697e] p-2 text-white"
+          >
+            SEND
+          </button>
         </div>
       </div>
 
